@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Release *v1.1.4* - ``2023-05-11``
+---------------------------------
+* Replace Django's urlquote (removed in Django 4.0) by Python's urllib.parse.quote
+* Support other template engines other than Django's
+
 Release *v1.1.3* - ``2020-05-01``
 ---------------------------------
 * Fix failure when using ``internal_version``
