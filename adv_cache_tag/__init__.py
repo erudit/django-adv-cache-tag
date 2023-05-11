@@ -19,5 +19,5 @@ def _extract_version(package_name):
     return version
 
 
-EXACT_VERSION = _extract_version('django_adv_cache_tag')
+EXACT_VERSION = _extract_version('erudit_django_adv_cache_tag')
 VERSION = tuple(int(part) for part in EXACT_VERSION.split('.') if str(part).isnumeric())
