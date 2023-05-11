@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Release *v1.1.5* - ``2023-05-11``
+---------------------------------
+* Fix project name in _extract_version
+
 Release *v1.1.4* - ``2023-05-11``
 ---------------------------------
 * Replace Django's urlquote (removed in Django 4.0) by Python's urllib.parse.quote
