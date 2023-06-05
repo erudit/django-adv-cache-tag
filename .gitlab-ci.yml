@@ -1,0 +1,38 @@
+stages:
+  - test
+
+test3.0:
+  stage: test
+  image: python:3.8
+  before_script:
+    - pip install django==3.0
+    - pip install -e .
+  script:
+    - ./runtests.sh
+
+test3.2:
+  stage: test
+  image: python:3.8
+  before_script:
+    - pip install django==3.2
+    - pip install -e .
+  script:
+    - ./runtests.sh
+
+test4.1:
+  stage: test
+  image: python:3.8
+  before_script:
+    - pip install django==4.1
+    - pip install -e .
+  script:
+    - ./runtests.sh
+
+test4.2:
+  stage: test
+  image: python:3.8
+  before_script:
+    - pip install django==4.2
+    - pip install -e .
+  script:
+    - ./runtests.sh
