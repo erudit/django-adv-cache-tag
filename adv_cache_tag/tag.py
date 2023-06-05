@@ -8,35 +8,17 @@ import zlib
 
 from urllib.parse import quote
 
-from django import VERSION as django_version
 from django.conf import settings
+from django.core.cache import caches
+from django.template import Engine
+from django.template import base as template
 from django.utils.encoding import smart_str, force_bytes
-
-from .compat import get_cache, get_template_libraries, template
-
-
-try:
-    template.TokenType  # django >= 2.1 only
-except AttributeError:
-    TOKEN_TEXT = template.TOKEN_TEXT
-    TOKEN_VAR = template.TOKEN_VAR
-    TOKEN_BLOCK = template.TOKEN_BLOCK
-    TOKEN_COMMENT = template.TOKEN_COMMENT
-else:
-    TOKEN_TEXT = template.TokenType.TEXT
-    TOKEN_VAR = template.TokenType.VAR
-    TOKEN_BLOCK = template.TokenType.BLOCK
-    TOKEN_COMMENT = template.TokenType.COMMENT
 
 
 logger = logging.getLogger('adv_cache_tag')
 
 
 def is_template_debug_activated():
-    if django_version < (1, 8):
-        return settings.TEMPLATE_DEBUG
-
-    # not so simple now, it's an option of a template backend
     for template_settings in settings.TEMPLATES:
         if template_settings['BACKEND'] == 'django.template.backends.django.DjangoTemplates':
             return bool(template_settings.get('OPTIONS', {}).get('debug', False))
@@ -354,7 +336,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         every object with a `get` and a `set` method (or not, if `cache_get`
         and `cache_set` methods are overridden)
         """
-        return get_cache(self.node.cache_backend or self.options.cache_backend)
+        return caches[self.node.cache_backend or self.options.cache_backend]
 
     def cache_get(self):
         """
@@ -528,7 +510,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         This is cached after the first call.
         """
 
-        libraries = get_template_libraries()
+        libraries = Engine.get_default().template_libraries
 
         force = False
 
@@ -646,10 +628,10 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             text = []
             parse_until = 'end%s' % token.contents
             tag_mapping = {
-                TOKEN_TEXT: ('', ''),
-                TOKEN_VAR: ('{{', '}}'),
-                TOKEN_BLOCK: ('{%', '%}'),
-                TOKEN_COMMENT: ('{#', '#}'),
+                template.TokenType.TEXT: ('', ''),
+                template.TokenType.VAR: ('{{', '}}'),
+                template.TokenType.BLOCK: ('{%', '%}'),
+                template.TokenType.COMMENT: ('{#', '#}'),
             }
             # By the time this template tag is called, the template system has already
             # lexed the template into tokens. Here, we loop over the tokens until
@@ -658,7 +640,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             # stripped off in a previous part of the template-parsing process.
             while parser.tokens:
                 token = parser.next_token()
-                if token.token_type == TOKEN_BLOCK and token.contents == parse_until:
+                if token.token_type == template.TokenType.BLOCK and token.contents == parse_until:
                     return template.TextNode(''.join(text))
                 start, end = tag_mapping[token.token_type]
                 text.append('%s%s%s' % (start, token.contents, end))

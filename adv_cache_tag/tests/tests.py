@@ -8,16 +8,16 @@ from datetime import datetime
 from urllib.parse import quote
 
 from django.conf import settings
+from django.core.cache import caches
+from django.template import base as template
+from django.template.context import Context
 from django.utils.encoding import force_bytes
 from django.utils.safestring import SafeText
 
-from django import VERSION as django_version
+from django.test import TestCase
 from django.test.utils import override_settings
 
-from adv_cache_tag.compat import get_cache, template
 from adv_cache_tag.tag import CacheTag
-
-from .compat import TestCase
 
 
 # Force some settings to not depend on the external ones
@@ -50,17 +50,6 @@ from .compat import TestCase
     ADV_CACHE_BACKEND = 'default',
     ADV_CACHE_VERSION = '',
     ADV_CACHE_RESOLVE_NAME = False,
-
-    # For django >= 1.8 (RemovedInDjango110Warning appears in 1.9)
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'APP_DIRS': True,
-            'OPTIONS': {
-                'debug': False
-            }
-        },
-    ]
 )
 class BasicTestCase(TestCase):
     """First basic test case to be able to test python/django compatibility."""
@@ -95,7 +84,7 @@ class BasicTestCase(TestCase):
 
         # Clear the cache
         for cache_name in settings.CACHES:
-            get_cache(cache_name).clear()
+            caches[cache_name].clear()
 
         # Reset CacheTag config with default value (from the ``override_settings``)
         self.reload_config()
@@ -127,7 +116,7 @@ class BasicTestCase(TestCase):
         """Clear caches at the end."""
 
         for cache_name in settings.CACHES:
-            get_cache(cache_name).clear()
+            caches[cache_name].clear()
 
         super(BasicTestCase, self).tearDown()
 
@@ -154,7 +143,7 @@ class BasicTestCase(TestCase):
         context_dict = {'obj': self.obj}
         if extend_context_dict:
             context_dict.update(extend_context_dict)
-        return template.Template(template_text).render(template.Context(context_dict))
+        return template.Template(template_text).render(Context(context_dict))
 
     def assertStripEqual(self, first, second):
         """Like ``assertEqual`` for strings, but after calling ``strip`` on both arguments."""
@@ -196,7 +185,7 @@ class BasicTestCase(TestCase):
         self.assertEqual(
             key, 'template.cache.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
 
-        self.assertStripEqual(get_cache('default').get(key), expected)
+        self.assertStripEqual(caches['default'].get(key), expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -225,11 +214,11 @@ class BasicTestCase(TestCase):
             key, 'template.cache.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
 
         # But it should NOT be the exact content as adv_cache_tag adds a version
-        self.assertNotStripEqual(get_cache('default').get(key), expected)
+        self.assertNotStripEqual(caches['default'].get(key), expected)
 
         # It should be the version from `adv_cache_tag`
         cache_expected = b"1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -333,7 +322,7 @@ class BasicTestCase(TestCase):
         self.assertEqual(  # no quotes arround `test_cached_template`
             key, 'template.cache.test_cached_template.f2f294788f4c38512d3b544ce07befd0')
         cache_expected = b"1::\n                foobar foo"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         t = """
             {% load adv_cache %}
@@ -348,7 +337,7 @@ class BasicTestCase(TestCase):
         self.assertEqual(  # no quotes arround `test_cached_template`
             key, 'template.cache.test_cached_template.8bccdefc91dc857fc02f6938bf69b816')
         cache_expected = b"1::\n                foobar bar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
     @override_settings(
         ADV_CACHE_VERSIONING = True,
@@ -381,7 +370,7 @@ class BasicTestCase(TestCase):
 
         # It should be in the cache, with the ``updated_at`` in the version
         cache_expected = b"1::2015-10-27 00:00:00::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -396,7 +385,7 @@ class BasicTestCase(TestCase):
 
         # It should be in the cache, with the new ``updated_at`` in the version
         cache_expected = b"1::2015-10-28 00:00:00::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -434,7 +423,7 @@ class BasicTestCase(TestCase):
 
         # It should be in the cache
         cache_expected = b"1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -471,7 +460,7 @@ class BasicTestCase(TestCase):
         # It should be in the cache, with only one space instead of many white spaces
         cache_expected = b"1:: foobar "
         # Test with ``assertEqual``, not ``assertStripEqual``
-        self.assertEqual(get_cache('default').get(key), cache_expected)
+        self.assertEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -508,7 +497,7 @@ class BasicTestCase(TestCase):
         compressed = zlib.compress(pickle.dumps(SafeText("  foobar  ")), -1)
         cache_expected = b'1::' + compressed
         # Test with ``assertEqual``, not ``assertStripEqual``
-        self.assertEqual(get_cache('default').get(key), cache_expected)
+        self.assertEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -520,12 +509,12 @@ class BasicTestCase(TestCase):
         self.assertEqual(self.get_name_called, 1)  # Still 1
 
         # But if the cache is invalidated, the new one will use this new level
-        get_cache('default').delete(key)
+        caches['default'].delete(key)
         self.assertStripEqual(self.render(t), expected)
         self.assertEqual(self.get_name_called, 2)  # One more
         compressed = zlib.compress(pickle.dumps(SafeText("  foobar  ")), 9)
         cache_expected = b'1::' + compressed
-        self.assertEqual(get_cache('default').get(key), cache_expected)
+        self.assertEqual(caches['default'].get(key), cache_expected)
 
 
     @override_settings(
@@ -563,7 +552,7 @@ class BasicTestCase(TestCase):
         compressed = zlib.compress(pickle.dumps(" foobar "))
         cache_expected = b'1::' + compressed
         # Test with ``assertEqual``, not ``assertStripEqual``
-        self.assertEqual(get_cache('default').get(key), cache_expected)
+        self.assertEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -601,10 +590,10 @@ class BasicTestCase(TestCase):
         cache_expected = b"1::\n                foobar"
 
         # But not in the ``default`` cache
-        self.assertIsNone(get_cache('default').get(key))
+        self.assertIsNone(caches['default'].get(key))
 
         # But in the ``foo`` cache
-        self.assertStripEqual(get_cache('foo').get(key), cache_expected)
+        self.assertStripEqual(caches['foo'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -646,7 +635,7 @@ class BasicTestCase(TestCase):
         # It should be in the cache, with the RAW part
         cache_expected = b"1:: foobar {%endRAW_38a11088962625eb8c913e791931e2bc2e3c7228%} " \
                          b"{{obj.get_foo}} {%RAW_38a11088962625eb8c913e791931e2bc2e3c7228%} !! "
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache but not for ``get_foo``
         expected = "foobar  foo 2  !!"
@@ -679,7 +668,7 @@ class BasicTestCase(TestCase):
         # It should be in the cache, with the ``internal_version`` in the version
         key = 'template.cache_with_version.test_cache_with_version.a1d0c6e83f027327d8461063f4ac58a6'
         cache_expected = b"1|v1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         self.get_name_called = 0
         # Calling it a new time should hit the cache
@@ -695,7 +684,7 @@ class BasicTestCase(TestCase):
         # It should be in the cache, with the new ``internal_version`` in the version
         key = 'template.cache_with_version.test_cache_with_version.a1d0c6e83f027327d8461063f4ac58a6'
         cache_expected = b"1|v2::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
     def test_new_class(self):
         """Test a new class based on ``CacheTag``."""
@@ -728,10 +717,10 @@ class BasicTestCase(TestCase):
         # It should be in the cache, with the RAW part
         cache_expected = b"1:: foobar {%endRAW_38a11088962625eb8c913e791931e2bc2e3c7228%} " \
                          b"{{obj.get_foo}} {%RAW_38a11088962625eb8c913e791931e2bc2e3c7228%} !! "
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # We'll check that our multiplicator was really applied
-        cache = get_cache('default')
+        cache = caches['default']
         expire_at = cache._expire_info[cache.make_key(key, version=None)]
         now = time.time()
         # In more that one second (default expiry we set) and less than ten
@@ -772,11 +761,11 @@ class BasicTestCase(TestCase):
             key, 'template.cache.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
 
         # But it should NOT be the exact content as adv_cache_tag adds a version
-        self.assertNotStripEqual(get_cache('default').get(key), expected)
+        self.assertNotStripEqual(caches['default'].get(key), expected)
 
         # It should be the version from `adv_cache_tag`
         cache_expected = b"1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t, {'fragment_name': 'test_cached_template'}), expected)
@@ -823,11 +812,11 @@ class BasicTestCase(TestCase):
             key, 'template.cache.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
 
         # But it should NOT be the exact content as adv_cache_tag adds a version
-        self.assertNotStripEqual(get_cache('default').get(key), expected)
+        self.assertNotStripEqual(caches['default'].get(key), expected)
 
         # It should be the version from `adv_cache_tag`
         cache_expected = b"1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -859,10 +848,10 @@ class BasicTestCase(TestCase):
         cache_expected = b"1::\n                foobar"
 
         # But not in the ``default`` cache
-        self.assertIsNone(get_cache('default').get(key))
+        self.assertIsNone(caches['default'].get(key))
 
         # But in the ``foo`` cache
-        self.assertStripEqual(get_cache('foo').get(key), cache_expected)
+        self.assertStripEqual(caches['foo'].get(key), cache_expected)
 
         # Render a second time, should hit the cache
         self.assertStripEqual(self.render(t), expected)
@@ -903,10 +892,6 @@ class BasicTestCase(TestCase):
         self.assertEqual(self.get_foo_called, 2)  # One more call to the non-cached part
 
     def set_template_debug_true(self):
-        if django_version < (1, 8):
-            return override_settings(TEMPLATE_DEBUG=True)
-
-        # not so simple now, it's an option of a template backend
         templates_settings_copy = deepcopy(settings.TEMPLATES)
         for template_settings in templates_settings_copy:
             if template_settings['BACKEND'] == 'django.template.backends.django.DjangoTemplates':
@@ -936,7 +921,7 @@ class BasicTestCase(TestCase):
             key, 'template.cache_set_fail.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
 
         # But not in the ``default`` cache
-        self.assertIsNone(get_cache('default').get(key))
+        self.assertIsNone(caches['default'].get(key))
 
         # It should raise if templates debug mode is activated
         with self.set_template_debug_true():
@@ -968,7 +953,7 @@ class BasicTestCase(TestCase):
 
         # It should be in the cache
         cache_expected = b"1::\n                foobar"
-        self.assertStripEqual(get_cache('default').get(key), cache_expected)
+        self.assertStripEqual(caches['default'].get(key), cache_expected)
 
         # It should raise if templates debug mode is activated
         with self.set_template_debug_true():
