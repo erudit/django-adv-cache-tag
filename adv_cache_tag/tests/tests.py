@@ -5,6 +5,7 @@ import zlib
 
 from copy import deepcopy
 from datetime import datetime
+from urllib.parse import quote
 
 from django.conf import settings
 from django.utils.encoding import force_bytes
@@ -12,7 +13,6 @@ from django.utils.safestring import SafeText
 
 from django import VERSION as django_version
 from django.test.utils import override_settings
-from django.utils.http import urlquote
 
 from adv_cache_tag.compat import get_cache, template
 from adv_cache_tag.tag import CacheTag
@@ -145,7 +145,7 @@ class BasicTestCase(TestCase):
         """Compose the cache key of a template."""
         if vary_on is None:
             vary_on = ()
-        key = ':'.join([urlquote(force_bytes(var)) for var in vary_on])
+        key = ':'.join([quote(force_bytes(var)) for var in vary_on])
         args = hashlib.md5(force_bytes(key))
         return (prefix + '.%s.%s') % (fragment_name, args.hexdigest())
 
