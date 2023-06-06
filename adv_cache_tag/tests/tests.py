@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import caches
+from django.core.cache.utils import make_template_fragment_key
 from django.template import base as template
 from django.template.context import Context
 from django.utils.encoding import force_bytes
@@ -180,10 +181,10 @@ class BasicTestCase(TestCase):
         self.assertEqual(self.get_name_called, 1)
 
         # Now the rendered template should be in cache
-        key = self.get_template_key('test_cached_template',
+        key = make_template_fragment_key('test_cached_template',
                                     vary_on=[self.obj['pk'], self.obj['updated_at']])
         self.assertEqual(
-            key, 'template.cache.test_cached_template.0cac9a03d5330dd78ddc9a0c16f01403')
+            key, 'template.cache.test_cached_template.27ec3d708052c29b29e013c11f4cd8d0')
 
         self.assertStripEqual(caches['default'].get(key), expected)
 
