@@ -1,4 +1,4 @@
-[![PyPI Version](https://img.shields.io/pypi/v/django-adv-cache-tag.png)](https://pypi.python.org/pypi/django-adv-cache-tag)
+[![PyPI Version](https://img.shields.io/pypi/v/erudit-django-adv-cache-tag)](https://pypi.org/project/erudit-django-adv-cache-tag/)
 [![Build Status on Travis CI](https://travis-ci.org/twidi/django-adv-cache-tag.png)](https://travis-ci.org/twidi/django-adv-cache-tag)
 
 django-adv-cache-tag
