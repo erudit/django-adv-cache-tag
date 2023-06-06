@@ -6,4 +6,4 @@ register = template.Library()
 
 @register.simple_tag
 def insert_foo():
-    return 'FoOoO'
+    return "FoOoO"

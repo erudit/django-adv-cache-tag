@@ -15,13 +15,13 @@ from django.template import base as template
 from django.utils.encoding import smart_str, force_bytes
 
 
-logger = logging.getLogger('adv_cache_tag')
+logger = logging.getLogger("adv_cache_tag")
 
 
 def is_template_debug_activated():
     for template_settings in settings.TEMPLATES:
-        if template_settings['BACKEND'] == 'django.template.backends.django.DjangoTemplates':
-            return bool(template_settings.get('OPTIONS', {}).get('debug', False))
+        if template_settings["BACKEND"] == "django.template.backends.django.DjangoTemplates":
+            return bool(template_settings.get("OPTIONS", {}).get("debug", False))
 
     return False
 
@@ -52,8 +52,8 @@ class Node(template.Node):
         self.fragment_name = template.Variable(fragment_name)
 
         self.cache_backend = None
-        if vary_on and vary_on[-1].startswith('using='):
-            self.cache_backend = vary_on.pop()[len('using='):]
+        if vary_on and vary_on[-1].startswith("using="):
+            self.cache_backend = vary_on.pop()[len("using=") :]
 
         self.version = None
         if self._cachetag_class_.options.versioning:
@@ -82,7 +82,7 @@ class CacheTagMetaClass(type):
         klass = super(CacheTagMetaClass, mcs).__new__(mcs, name, bases, attrs)
         klass.options = klass._meta = klass.Meta()
         # One `Node` class for each `CacheTag` class, with a link on the reverse side too
-        klass.Node = type('Node', (klass.Node, ), {'_cachetag_class_': klass})
+        klass.Node = type("Node", (klass.Node,), {"_cachetag_class_": klass})
         return klass
 
 
@@ -115,23 +115,27 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
     """
 
     # Will change if the algorithm changes
-    INTERNAL_VERSION = '1'
+    INTERNAL_VERSION = "1"
     # Used to separate internal version, template version, and the content
-    VERSION_SEPARATOR = '::'
+    VERSION_SEPARATOR = "::"
 
     # Regex used to reduce spaces/blanks (many spaces into one)
-    RE_SPACELESS = re.compile(r'\s\s+')
+    RE_SPACELESS = re.compile(r"\s\s+")
 
     # generate a token for this site, based on the secret_key
-    RAW_TOKEN = 'RAW_' + hashlib.sha1(
-        b'RAW_TOKEN_SALT1' + force_bytes(hashlib.sha1(
-            b'RAW_TOKEN_SALT2' + force_bytes(settings.SECRET_KEY)
-        ).hexdigest())
-    ).hexdigest()
+    RAW_TOKEN = (
+        "RAW_"
+        + hashlib.sha1(
+            b"RAW_TOKEN_SALT1"
+            + force_bytes(
+                hashlib.sha1(b"RAW_TOKEN_SALT2" + force_bytes(settings.SECRET_KEY)).hexdigest()
+            )
+        ).hexdigest()
+    )
 
     # tokens to use around the already parsed parts of the cached template
     RAW_TOKEN_START = template.BLOCK_TAG_START + RAW_TOKEN + template.BLOCK_TAG_END
-    RAW_TOKEN_END = template.BLOCK_TAG_START + 'end' + RAW_TOKEN + template.BLOCK_TAG_END
+    RAW_TOKEN_END = template.BLOCK_TAG_START + "end" + RAW_TOKEN + template.BLOCK_TAG_END
 
     # internal use only: keep reference to templatetags functions
     _templatetags = {}
@@ -149,26 +153,26 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         """
 
         # If versioning is activated (internal versioning is always on)
-        versioning = getattr(settings, 'ADV_CACHE_VERSIONING', False)
+        versioning = getattr(settings, "ADV_CACHE_VERSIONING", False)
 
         # If the content will be compressed before caching
-        compress = getattr(settings, 'ADV_CACHE_COMPRESS', False)
-        compress_level = getattr(settings, 'ADV_CACHE_COMPRESS_LEVEL', zlib.Z_DEFAULT_COMPRESSION)
+        compress = getattr(settings, "ADV_CACHE_COMPRESS", False)
+        compress_level = getattr(settings, "ADV_CACHE_COMPRESS_LEVEL", zlib.Z_DEFAULT_COMPRESSION)
 
         # If many spaces/blanks will be converted into one
-        compress_spaces = getattr(settings, 'ADV_CACHE_COMPRESS_SPACES', False)
+        compress_spaces = getattr(settings, "ADV_CACHE_COMPRESS_SPACES", False)
 
         # If a "pk" (you can pass what you want) will be added to the cache key
-        include_pk = getattr(settings, 'ADV_CACHE_INCLUDE_PK', False)
+        include_pk = getattr(settings, "ADV_CACHE_INCLUDE_PK", False)
 
         # The cache backend to use (or use the "default" one)
-        cache_backend = getattr(settings, 'ADV_CACHE_BACKEND', 'default')
+        cache_backend = getattr(settings, "ADV_CACHE_BACKEND", "default")
 
         # Part of the INTERNAL_VERSION configurable via settings
-        internal_version = getattr(settings, 'ADV_CACHE_VERSION', '')
+        internal_version = getattr(settings, "ADV_CACHE_VERSION", "")
 
         # If the fragment name should be resolved or taken as is
-        resolve_fragment = getattr(settings, 'ADV_CACHE_RESOLVE_NAME', False)
+        resolve_fragment = getattr(settings, "ADV_CACHE_RESOLVE_NAME", False)
 
     # Use a metaclass to use the right class in the Node class, and assign Meta to options
 
@@ -188,20 +192,21 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         self.context = context
 
         # indicate that we force regenerating the cache, even if it exists
-        self.regenerate = bool(self.context.get('__regenerate__', False))
+        self.regenerate = bool(self.context.get("__regenerate__", False))
 
         # indicate if we only want html without parsing the nocache parts
-        self.partial = bool(self.context.get('__partial__', False))
+        self.partial = bool(self.context.get("__partial__", False))
 
         # the content of the template, will be used through the whole process
-        self.content = ''
+        self.content = ""
         # the version used in the cached templatetag
         self.content_version = None
 
         # Final "INTERNAL_VERSION"
         if self.options.internal_version:
-            self.INTERNAL_VERSION = force_bytes('%s|%s' % (self.__class__.INTERNAL_VERSION,
-                                                           self.options.internal_version))
+            self.INTERNAL_VERSION = force_bytes(
+                "%s|%s" % (self.__class__.INTERNAL_VERSION, self.options.internal_version)
+            )
         else:
             self.INTERNAL_VERSION = force_bytes(self.__class__.INTERNAL_VERSION)
 
@@ -225,13 +230,13 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         else:
             self.fragment_name = str(self.node.fragment_name)
             # Remove quotes that surround the name
-            for char in '\'\"':
+            for char in "'\"":
                 if self.fragment_name.startswith(char) or self.fragment_name.endswith(char):
                     if self.fragment_name.startswith(char) and self.fragment_name.endswith(char):
                         self.fragment_name = self.fragment_name[1:-1]
                         break
                     else:
-                        raise ValueError('Number of quotes around the fragment name is incoherent')
+                        raise ValueError("Number of quotes around the fragment name is incoherent")
 
         self.expire_time = self.get_expire_time()
 
@@ -248,8 +253,10 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         try:
             expire_time = self.node.expire_time.resolve(self.context)
         except template.VariableDoesNotExist:
-            raise template.TemplateSyntaxError('"%s" tag got an unknown variable: %r' %
-                                               (self.node.nodename, self.node.expire_time.var))
+            raise template.TemplateSyntaxError(
+                '"%s" tag got an unknown variable: %r'
+                % (self.node.nodename, self.node.expire_time.var)
+            )
         try:
             if expire_time is not None:
                 expire_time = str(expire_time)
@@ -258,9 +265,8 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
                 expire_time = int(expire_time)
         except (ValueError, TypeError):
             raise template.TemplateSyntaxError(
-                '"%s" tag got a non-integer (or None) timeout value: %r' % (
-                    self.node.nodename, expire_time
-                )
+                '"%s" tag got a non-integer (or None) timeout value: %r'
+                % (self.node.nodename, expire_time)
             )
 
         return expire_time
@@ -272,19 +278,22 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         if not self.node.version:
             return None
         try:
-            version = smart_str('%s' % self.node.version.resolve(self.context))
+            version = smart_str("%s" % self.node.version.resolve(self.context))
         except template.VariableDoesNotExist:
-            raise template.TemplateSyntaxError('"%s" tag got an unknown variable: %r' %
-                                               (self.node.nodename, self.node.version.var))
+            raise template.TemplateSyntaxError(
+                '"%s" tag got an unknown variable: %r' % (self.node.nodename, self.node.version.var)
+            )
 
-        return '%s' % version
+        return "%s" % version
 
     def hash_args(self):
         """
         Take all the arguments passed after the fragment name and return a
         hashed version which will be used in the cache key
         """
-        return hashlib.md5(force_bytes(':'.join([quote(force_bytes(var)) for var in self.vary_on]))).hexdigest()
+        return hashlib.md5(
+            force_bytes(":".join([quote(force_bytes(var)) for var in self.vary_on]))
+        ).hexdigest()
 
     def get_pk(self):
         """
@@ -304,9 +313,9 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             * %(hash)s : the return of the `hash_args` method
         """
         if self.options.include_pk:
-            return 'template.%(nodename)s.%(name)s.%(pk)s.%(hash)s'
+            return "template.%(nodename)s.%(name)s.%(pk)s.%(hash)s"
         else:
-            return 'template.%(nodename)s.%(name)s.%(hash)s'
+            return "template.%(nodename)s.%(name)s.%(hash)s"
 
     def get_cache_key_args(self):
         """
@@ -318,7 +327,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             hash=self.hash_args(),
         )
         if self.options.include_pk:
-            cache_key_args['pk'] = self.get_pk()
+            cache_key_args["pk"] = self.get_pk()
 
         return cache_key_args
 
@@ -416,7 +425,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         self.render_node()
 
         if self.options.compress_spaces:
-            self.content = self.RE_SPACELESS.sub(' ', self.content)
+            self.content = self.RE_SPACELESS.sub(" ", self.content)
 
         if self.options.compress:
             to_cache = self.encode_content()
@@ -430,7 +439,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         except Exception:
             if is_template_debug_activated():
                 raise
-            logger.exception('Error when saving the cached template fragment')
+            logger.exception("Error when saving the cached template fragment")
 
     def load_content(self):
         """
@@ -450,10 +459,9 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             except Exception:
                 if is_template_debug_activated():
                     raise
-                logger.exception('Error when getting the cached template fragment')
+                logger.exception("Error when getting the cached template fragment")
 
         try:
-
             assert self.content
 
             self.split_content_version()
@@ -461,7 +469,8 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             assert self.content
 
             if self.content_internal_version != self.INTERNAL_VERSION or (
-                    self.options.versioning and self.content_version != self.version):
+                self.options.versioning and self.content_version != self.version
+            ):
                 self.content = None
 
             assert self.content
@@ -473,7 +482,6 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             self.create_content()
 
         self.content = smart_str(self.content)
-
 
     def render(self):
         """
@@ -492,8 +500,8 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         except Exception:
             if is_template_debug_activated():
                 raise
-            logger.exception('Error when rendering template fragment')
-            return ''
+            logger.exception("Error when rendering template fragment")
+            return ""
 
         if self.partial or self.RAW_TOKEN_START not in self.content:
             return self.content
@@ -515,30 +523,27 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         force = False
 
         # We'll force the update of the cache if new libraries where added
-        if hasattr(CacheTag.get_all_tags_and_filters_by_function, '_len_libraries'):
+        if hasattr(CacheTag.get_all_tags_and_filters_by_function, "_len_libraries"):
             if len(libraries) != CacheTag.get_all_tags_and_filters_by_function._len_libraries:
                 force = True
 
-        if force or not hasattr(CacheTag.get_all_tags_and_filters_by_function, '_cache'):
+        if force or not hasattr(CacheTag.get_all_tags_and_filters_by_function, "_cache"):
             CacheTag.get_all_tags_and_filters_by_function._len_libraries = len(libraries)
             available_tags = {}
             available_filters = {}
 
             for lib_name, lib in libraries.items():
                 available_tags.update(
-                    (function, (lib_name, tag_name))
-                    for tag_name, function
-                    in lib.tags.items()
+                    (function, (lib_name, tag_name)) for tag_name, function in lib.tags.items()
                 )
                 available_filters.update(
                     (function, (lib_name, filter_name))
-                    for filter_name, function
-                    in lib.filters.items()
+                    for filter_name, function in lib.filters.items()
                 )
 
             CacheTag.get_all_tags_and_filters_by_function._cache = {
-                'tags': available_tags,
-                'filters': available_filters
+                "tags": available_tags,
+                "filters": available_filters,
             }
 
         return CacheTag.get_all_tags_and_filters_by_function._cache
@@ -551,8 +556,8 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         """
         if cls not in CacheTag._templatetags_modules:
             # find the library including the main templatetag of the current class
-            all_tags = cls.get_all_tags_and_filters_by_function()['tags']
-            CacheTag._templatetags_modules[cls] = all_tags[CacheTag._templatetags[cls]['cache']][0]
+            all_tags = cls.get_all_tags_and_filters_by_function()["tags"]
+            CacheTag._templatetags_modules[cls] = all_tags[CacheTag._templatetags[cls]["cache"]][0]
         return CacheTag._templatetags_modules[cls]
 
     def render_nocache(self):
@@ -560,16 +565,20 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         Render the `nocache` blocks of the content and return the whole
         html
         """
-        tmpl = template.Template(''.join([
-            # start by loading the cache library
-            template.BLOCK_TAG_START,
-            'load %s' % self.get_templatetag_module(),
-            template.BLOCK_TAG_END,
-            # and surround the cached template by "raw" tags
-            self.RAW_TOKEN_START,
-            self.content,
-            self.RAW_TOKEN_END,
-        ]))
+        tmpl = template.Template(
+            "".join(
+                [
+                    # start by loading the cache library
+                    template.BLOCK_TAG_START,
+                    "load %s" % self.get_templatetag_module(),
+                    template.BLOCK_TAG_END,
+                    # and surround the cached template by "raw" tags
+                    self.RAW_TOKEN_START,
+                    self.content,
+                    self.RAW_TOKEN_END,
+                ]
+            )
+        )
         return tmpl.render(self.context)
 
     @classmethod
@@ -583,11 +592,12 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         """
         if len(tokens) < 3:
             raise template.TemplateSyntaxError(
-                "'%r' tag requires at least 2 arguments." % tokens[0])
+                "'%r' tag requires at least 2 arguments." % tokens[0]
+            )
         return tokens[1], tokens[2], tokens[3:]
 
     @classmethod
-    def register(cls, library_register, nodename='cache', nocache_nodename='nocache'):
+    def register(cls, library_register, nodename="cache", nocache_nodename="nocache"):
         """
         Register all needed templatetags, with these parameters :
             * library_register : the `register` object (result of
@@ -598,7 +608,7 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
         """
 
         if cls in CacheTag._templatetags:
-            raise RuntimeError('The adv-cache-tag class %s is already registered' % cls)
+            raise RuntimeError("The adv-cache-tag class %s is already registered" % cls)
 
         CacheTag._templatetags[cls] = {}
 
@@ -606,13 +616,13 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             """
             Return a new Node object for the main cache templatetag
             """
-            nodelist = parser.parse(('end%s' % nodename,))
+            nodelist = parser.parse(("end%s" % nodename,))
             parser.delete_first_token()
             args = cls.get_template_node_arguments(token.contents.split())
             return cls.Node(nodename, nodelist, *args)
 
         library_register.tag(nodename, templatetag_cache)
-        CacheTag._templatetags[cls]['cache'] = templatetag_cache
+        CacheTag._templatetags[cls]["cache"] = templatetag_cache
 
         def templatetag_raw(parser, token):
             """
@@ -626,12 +636,12 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             # raw, un-rendered template code.
 
             text = []
-            parse_until = 'end%s' % token.contents
+            parse_until = "end%s" % token.contents
             tag_mapping = {
-                template.TokenType.TEXT: ('', ''),
-                template.TokenType.VAR: ('{{', '}}'),
-                template.TokenType.BLOCK: ('{%', '%}'),
-                template.TokenType.COMMENT: ('{#', '#}'),
+                template.TokenType.TEXT: ("", ""),
+                template.TokenType.VAR: ("{{", "}}"),
+                template.TokenType.BLOCK: ("{%", "%}"),
+                template.TokenType.COMMENT: ("{#", "#}"),
             }
             # By the time this template tag is called, the template system has already
             # lexed the template into tokens. Here, we loop over the tokens until
@@ -641,13 +651,13 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             while parser.tokens:
                 token = parser.next_token()
                 if token.token_type == template.TokenType.BLOCK and token.contents == parse_until:
-                    return template.TextNode(''.join(text))
+                    return template.TextNode("".join(text))
                 start, end = tag_mapping[token.token_type]
-                text.append('%s%s%s' % (start, token.contents, end))
+                text.append("%s%s%s" % (start, token.contents, end))
             parser.unclosed_block_tag(parse_until)
 
         library_register.tag(cls.RAW_TOKEN, templatetag_raw)
-        CacheTag._templatetags[cls]['raw'] = templatetag_raw
+        CacheTag._templatetags[cls]["raw"] = templatetag_raw
 
         def templatetag_nocache(parser, token):
             """
@@ -673,8 +683,8 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             # template, to be able to use it when the no-cache will be rendered
 
             all_tags_and_filters = cls.get_all_tags_and_filters_by_function()
-            available_tags = all_tags_and_filters['tags']
-            available_filters = all_tags_and_filters['filters']
+            available_tags = all_tags_and_filters["tags"]
+            available_filters = all_tags_and_filters["filters"]
 
             needed = {}
             current_module = cls.get_templatetag_module()
@@ -693,10 +703,11 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
                         continue
                     needed.setdefault(lib, set()).add(name)
 
-            load_string = ''.join(
-                '%sload %s from %s%s' % (
+            load_string = "".join(
+                "%sload %s from %s%s"
+                % (
                     template.BLOCK_TAG_START,
-                    ' '.join(names),
+                    " ".join(names),
                     lib,
                     template.BLOCK_TAG_END,
                 )
@@ -708,4 +719,4 @@ class CacheTag(object, metaclass=CacheTagMetaClass):
             return node
 
         library_register.tag(nocache_nodename, templatetag_nocache)
-        CacheTag._templatetags['nocache'] = templatetag_nocache
+        CacheTag._templatetags["nocache"] = templatetag_nocache

@@ -1,4 +1,5 @@
 stages:
+  - lint
   - django3.2
   - django4.1
   - django4.2
@@ -6,10 +7,23 @@ stages:
 .runtests:
   image: python:$PYTHON_VERSION
   before_script:
+    - python -m pip install --upgrade pip
     - pip install django==$DJANGO_VERSION
     - pip install -e .
   script:
     - ./runtests.sh
+
+# Lint
+
+lint:
+  stage: lint
+  image: python:3.11
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install black ruff
+  script:
+    - black adv_cache_tag --check
+    - ruff adv_cache_tag
 
 # Django 3.2
 

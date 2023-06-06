@@ -3,6 +3,25 @@ name: django-adv-cache-tag
 on: [push]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black ruff
+          pip install -e .
+      - name: Run lint
+        run: |
+          black adv_cache_tag --check
+          ruff adv_cache_tag
+
   test:
     runs-on: ubuntu-latest
     strategy:
