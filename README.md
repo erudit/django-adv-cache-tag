@@ -1,5 +1,5 @@
 [![PyPI Version](https://img.shields.io/pypi/v/erudit-django-adv-cache-tag)](https://pypi.org/project/erudit-django-adv-cache-tag/)
-[![Build Status on Travis CI](https://travis-ci.org/twidi/django-adv-cache-tag.png)](https://travis-ci.org/twidi/django-adv-cache-tag)
+[![GitHub Workflow](https://img.shields.io/github/actions/workflow/status/erudit/django-adv-cache-tag/test.yml)](https://github.com/erudit/django-adv-cache-tag/actions/workflows/test.yml)
 
 django-adv-cache-tag
 ====================
