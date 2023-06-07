@@ -3,6 +3,7 @@ stages:
   - django3.2
   - django4.1
   - django4.2
+  - publish
 
 .pytest:
   image: python:$PYTHON_VERSION
@@ -118,3 +119,14 @@ django4.2-python3.11:
   variables:
     PYTHON_VERSION: "3.11"
     DJANGO_VERSION: "4.2"
+
+publish:
+  stage: publish
+  image: python:3.11
+  script:
+    - poetry config repositories.cheese_shop https://gitlab.erudit.org/api/v4/projects/332/packages/pypi
+    - poetry build
+    - poetry publish --username __token__ --password ${PYPI_API_TOKEN}
+    - poetry publish --repository cheese_shop --username gitlab-ci-token --password ${CI_JOB_TOKEN}
+  only:
+    - tags
