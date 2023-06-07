@@ -10,10 +10,11 @@ stages:
     DJANGO_SETTINGS_MODULE: "adv_cache_tag.tests.testproject.settings"
   before_script:
     - python -m pip install --upgrade pip
-    - pip install pytest pytest-django django==$DJANGO_VERSION
-    - pip install -e .
+    - pip install poetry
+    - poetry add --group dev django@$DJANGO_VERSION
+    - poetry install
   script:
-    - pytest
+    - poetry run pytest
 
 # Lint
 
@@ -22,10 +23,11 @@ lint:
   image: python:3.11
   before_script:
     - python -m pip install --upgrade pip
-    - pip install black ruff
+    - pip install poetry
+    - poetry install
   script:
-    - black adv_cache_tag --check
-    - ruff adv_cache_tag
+    - poetry run black adv_cache_tag --check
+    - poetry run ruff adv_cache_tag
 
 # Django 3.2
 

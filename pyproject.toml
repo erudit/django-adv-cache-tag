@@ -1,3 +1,26 @@
+[tool.poetry]
+name = "erudit-django-adv-cache-tag"
+version = "1.1.5"
+description = "An advanced template tag for caching in django: versioning, compress, partial caching, easy inheritance"
+authors = ["Stephane \"Twidi\" Angel <s.angel@twidi.com>", "Consortium Érudit <tech@erudit.org>"]
+readme = "README.md"
+license = "LICENSE"
+packages = [{include = "adv_cache_tag"}]
+
+[tool.poetry.dependencies]
+python = "^3.8 || ^3.9 || ^3.10 || ^3.11"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+pytest-django = "^4.5.2"
+Django = "^3.2 || ^4.1 || ^4.2"
+black = "^23.3.0"
+ruff = "^0.0.271"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.black]
 line-length = 100
 
