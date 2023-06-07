@@ -4,14 +4,16 @@ stages:
   - django4.1
   - django4.2
 
-.runtests:
+.pytest:
   image: python:$PYTHON_VERSION
+  variables:
+    DJANGO_SETTINGS_MODULE: "adv_cache_tag.tests.testproject.settings"
   before_script:
     - python -m pip install --upgrade pip
-    - pip install django==$DJANGO_VERSION
+    - pip install pytest pytest-django django==$DJANGO_VERSION
     - pip install -e .
   script:
-    - ./runtests.sh
+    - pytest
 
 # Lint
 
@@ -29,28 +31,28 @@ lint:
 
 django3.2-python3.8:
   stage: django3.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.8"
     DJANGO_VERSION: "3.2"
 
 django3.2-python3.9:
   stage: django3.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.9"
     DJANGO_VERSION: "3.2"
 
 django3.2-python3.10:
   stage: django3.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.10"
     DJANGO_VERSION: "3.2"
 
 django3.2-python3.11:
   stage: django3.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.11"
     DJANGO_VERSION: "3.2"
@@ -59,28 +61,28 @@ django3.2-python3.11:
 
 django4.1-python3.8:
   stage: django4.1
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.8"
     DJANGO_VERSION: "4.1"
 
 django4.1-python3.9:
   stage: django4.1
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.9"
     DJANGO_VERSION: "4.1"
 
 django4.1-python3.10:
   stage: django4.1
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.10"
     DJANGO_VERSION: "4.1"
 
 django4.1-python3.11:
   stage: django4.1
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.11"
     DJANGO_VERSION: "4.1"
@@ -89,28 +91,28 @@ django4.1-python3.11:
 
 django4.2-python3.8:
   stage: django4.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.8"
     DJANGO_VERSION: "4.2"
 
 django4.2-python3.9:
   stage: django4.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.9"
     DJANGO_VERSION: "4.2"
 
 django4.2-python3.10:
   stage: django4.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.10"
     DJANGO_VERSION: "4.2"
 
 django4.2-python3.11:
   stage: django4.2
-  extends: .runtests
+  extends: .pytest
   variables:
     PYTHON_VERSION: "3.11"
     DJANGO_VERSION: "4.2"

@@ -5,18 +5,18 @@ from adv_cache_tag.tag import CacheTag, Node
 register = template.Library()
 
 
-class TestNode(Node):
+class MockNode(Node):
     def __init__(self, nodename, nodelist, expire_time, multiplicator, fragment_name, vary_on):
         """Save the multiplicator variable in the node (not resolved yet)"""
-        super(TestNode, self).__init__(nodename, nodelist, expire_time, fragment_name, vary_on)
+        super(MockNode, self).__init__(nodename, nodelist, expire_time, fragment_name, vary_on)
         self.multiplicator = multiplicator
 
 
-class TestCacheTag(CacheTag):
+class MockCacheTag(CacheTag):
     class Meta(CacheTag.Meta):
         compress_spaces = True
 
-    Node = TestNode
+    Node = MockNode
 
     @classmethod
     def get_template_node_arguments(cls, tokens):
@@ -30,15 +30,15 @@ class TestCacheTag(CacheTag):
     def prepare_params(self):
         """Resolve the multiplicator variable to it's real content"""
         self.multiplicator = int(template.Variable(self.node.multiplicator).resolve(self.context))
-        super(TestCacheTag, self).prepare_params()
+        super(MockCacheTag, self).prepare_params()
 
     def get_expire_time(self):
         """Update the expiry time with the multiplicator."""
-        expiry_time = super(TestCacheTag, self).get_expire_time()
+        expiry_time = super(MockCacheTag, self).get_expire_time()
         return self.multiplicator * expiry_time
 
 
-TestCacheTag.register(register, "cache_test", "nocache_test")
+MockCacheTag.register(register, "cache_test", "nocache_test")
 
 
 class FailingCacheSetCacheTag(CacheTag):

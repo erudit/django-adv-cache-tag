@@ -1,7 +1,27 @@
 import os.path
+import zlib
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+DEBUG = False
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "default-cache",
+    },
+    "foo": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "foo-cache",
+    },
+}
+
+ADV_CACHE_VERSIONING = False
+ADV_CACHE_COMPRESS = False
+ADV_CACHE_COMPRESS_LEVEL = zlib.Z_DEFAULT_COMPRESSION
+ADV_CACHE_COMPRESS_SPACES = False
+ADV_CACHE_INCLUDE_PK = False
+ADV_CACHE_BACKEND = "default"
+ADV_CACHE_VERSION = ""
+ADV_CACHE_RESOLVE_NAME = False
 
 SECRET_KEY = "m-92)2et+&&m5f&#jld7-_1qanq*n9!z90xc@+wx6y8d6y#w6t"
 
@@ -46,3 +66,5 @@ TEMPLATES = [
         "OPTIONS": {"debug": False},
     },
 ]
+
+USE_TZ = True
