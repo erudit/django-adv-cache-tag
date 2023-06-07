@@ -11,9 +11,6 @@ Django advanced cache template tag:
 -   partial caching
 -   easily extendable/customizable
 
-Readable documentation on
-<http://documentup.com/twidi/django-adv-cache-tag>
-
 Introduction
 ------------
 
@@ -52,20 +49,8 @@ Installation
 
     pip install django-adv-cache-tag
 
-Starting at version `1.0`, we only support python 3.
-
-**If you upgrade from version &lt; 1, note that the internal version
-number has changed, so all cache will be reset.**
-
-If you want python 2 support, you must install by passing the version :
-
-    pip install 'django-adv-cache-tag<1.0'
-
 Or you can find it on Github:
 <https://github.com/twidi/django-adv-cache-tag>
-
-(for python2 version:
-<https://github.com/twidi/django-adv-cache-tag/tree/python2>)
 
 When installed, just add `adv_cache_tag` to your `INSTALLED_APPS` in the
 `settings.py` file of your django project.
@@ -818,52 +803,19 @@ LICENSE file)
 Running tests
 -------------
 
-If `adv_cache_tag` is in the `INSTALLED_APPS` of your project, simply
-run:
-
-    django-admin test adv_cache_tag
-
-(you may want to use `django-admin` or `./manage.py` depending on your
-installation)
-
-If you are in a fresh virtualenv to work on `adv_cache_tag`, install the
-django version you want:
-
-    pip install django
-
-Then make the `adv_cache_tag` module available in your python path. For
-example, with `virtualenv-wrapper`, considering you are at the root of
-the `django-adv-cache-tag` repository, simply do:
-
-    add2virtualenv .
-
-Or simply:
-
-    pip install -e .
-
-Then to run the tests, this library provides a test project, so you can
-launch them this way:
-
-    DJANGO_SETTINGS_MODULE=adv_cache_tag.tests.testproject.settings django-admin.py test adv_cache_tag
-
-Or simply launch the `runtests.sh` script (it will run this exact
-command):
-
-    ./runtests.sh
+```bash
+poetry install
+poetry run black --check adv_cache_tag
+poetry run ruff adv_cache_tag
+export DJANGO_SETTINGS_MODULE=adv_cache_tag.tests.testproject.settings
+poetry run pytest
+```
 
 Supported versions
 ------------------
 
   Django version | Python version | Library version
   -------------- | -------------- | ---------------
-  1.7 to 1.11    | 2.7            | 0.4
-  1.7            | 3.4            | 1.1.3
-  1.8 to 1.10    | 3.4, 3.5       | 1.1.3
-  1.11           | 3.4 to 3.6     | 1.1.3
-  2.0            | 3.4, to 3.7    | 1.1.3
-  2.1            | 3.5 to 3.7     | 1.1.3
-  2.2            | 3.5 to 3.8     | 1.1.3
-  3.0            | 3.6 to 3.8     | 1.1.3
-
-Support for Python 2 is dropped since version 1 of
-`django-adv-cache-tag`
+  3.2            | 3.8 to 3.10    | >=1.1.5
+  4.1            | 3.8 to 3.11    | >=1.1.5
+  4.2            | 3.8 to 3.11    | >=1.1.5
